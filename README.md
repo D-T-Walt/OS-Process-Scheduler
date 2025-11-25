@@ -64,11 +64,11 @@ Automatically calculated for each algorithm:
 
 1.  Compile the program:
 
-        javac ProcessControlBlock.java
+        javac path/to/file/ProcessControlBlock.java
 
 2.  Run the program:
 
-        java ProcessControlBlock
+        java path/to/file/ProcessControlBlock
 
 3.  Follow prompts to enter:
 
