@@ -9,10 +9,11 @@ the following scheduling algorithms:
 -   **Multi-Level Queue (MLQ)**
 
 It allows the user to input process details and then generates
-performance metrics such as: - Turnaround Time\
-- Waiting Time\
-- Response Time\
-- CPU Utilization\
+performance metrics such as: 
+- Turnaround Time
+- Waiting Time
+- Response Time
+- CPU Utilization
 - Throughput
 
 ------------------------------------------------------------------------
