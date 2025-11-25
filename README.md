@@ -34,19 +34,20 @@ Non-preemptive priority-based execution with FCFS tie-breaking.
 
 ### ✔ Multi-Level Queue
 
-Two-level queue system:\
-- High Priority → Round Robin\
+Two-level queue system:
+- High Priority → Round Robin
 - Low Priority → FCFS
 
 ------------------------------------------------------------------------
 
 ## 🎯 Performance Metrics
 
-Automatically calculated for each algorithm: - Completion Time\
-- Turnaround Time\
-- Waiting Time\
-- Response Time\
-- CPU Utilization\
+Automatically calculated for each algorithm: 
+- Completion Time
+- Turnaround Time
+- Waiting Time
+- Response Time
+- CPU Utilization
 - Throughput
 
 ------------------------------------------------------------------------
@@ -71,9 +72,9 @@ Automatically calculated for each algorithm: - Completion Time\
 
 3.  Follow prompts to enter:
 
-    -   Number of processes\
-    -   Arrival Time\
-    -   Burst Time\
+    -   Number of processes
+    -   Arrival Time
+    -   Burst Time
     -   Priority
 
 4.  View results of all scheduling algorithms.
