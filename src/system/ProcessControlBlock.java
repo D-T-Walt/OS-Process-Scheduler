@@ -262,9 +262,8 @@ public class ProcessControlBlock {
         double avgTAT = totalTAT / processes.size();
         double avgWT = totalWT / processes.size();
         double avgRT = totalRT / processes.size();
-        double cpuUtil = (totalExecutionTime > 0) ? (totalBT / totalExecutionTime) * 100 : 0;
-        double throughput = (totalExecutionTime > 0) ? (double) processes.size() / totalExecutionTime : 0;
-
+        double cpuUtil = (totalExecutionTime > 0) ? ((totalBT / totalExecutionTime) * 100) : 0;
+        double throughput = (totalExecutionTime > 0) ? ((double) processes.size() / (totalExecutionTime)) : 0;
         // Print the final results
         System.out.println("\n-----------------------------------------------------------------------------");
         System.out.printf("| %-5s | %-8s | %-6s | %-10s | %-10s | %-8s | %-8s |\n", 
@@ -306,6 +305,7 @@ public class ProcessControlBlock {
 			if(!readyQueue.isEmpty()){
 				ProcessControlBlock pcb = readyQueue.poll();//get the head of the queue, the first process that arrived
 				int startTime = Math.max(pcb.getArrivalTime(), currTime);
+				
 				pcb.setStartTime(startTime);
 				
 				pcb.setResponseTime(pcb.getStartTime() - pcb.getArrivalTime());
@@ -322,7 +322,6 @@ public class ProcessControlBlock {
 				
 				compProcesses++;	
 			}else{
-				//If the queue is empty but all processes have not arrived the CPU idles until the next arrival time
 				if(processIndex < processes.size()){
 					currTime = processes.get(processIndex).getArrivalTime();
 				}
@@ -332,73 +331,101 @@ public class ProcessControlBlock {
 		calculatePerformanceMetrics(processes);
 	}
 	
-	public static void roundRobin( List <ProcessControlBlock> processes, int quantum)
+	public static void roundRobin(List<ProcessControlBlock> processes, Scanner input)
 	{
-		int currentTime = 0;
-		int completed = 0;
-		
-		Queue<ProcessControlBlock> readyQueue = new LinkedList<>();
+	    int quantum = -1;
 
-		System.out.println("\n--- Running Round Robin (Quantum: " + quantum + ") ---");
+	    // input loop for quantum
+	    while (quantum <= 0)
+	    {
+	        System.out.print("\nEnter the quantum for Round Robin: ");
+	        if (input.hasNextInt())
+	        {
+	            quantum = input.nextInt();
+	            if (quantum <= 0)
+	            {
+	                System.err.println("Quantum must be > 0!");
+	            }
+	        } else {
+	            System.err.println("Invalid input!");
+	            input.next();
+	        }
+	    }
 
-		//sort via arrival time
-		processes.sort(Comparator.comparingInt(ProcessControlBlock::getArrivalTime));
-		//essentially sorts this line of processes by looking at the integer value returned by getArrivalTime
+	    System.out.println("\n--- Running Round Robin (Quantum: " + quantum + ") ---");
 
-		int pIndex = 0; //points to the next process in the sorted list that hasnt arrived as yet
-		
-		while (completed < processes.size()){
+	    // Make a fresh copy of the processes so we don't reuse state from previous scheduling runs
+	    List<ProcessControlBlock> tempProcesses = new ArrayList<>();
+	    for (ProcessControlBlock p : processes) {
+	        // Use the constructor - it initializes remainingTime = burstTime and startTime = -1
+	        ProcessControlBlock copy = new ProcessControlBlock(p.getPid(), p.getArrivalTime(), p.getBurstTime(), p.getPriority(), p.getQueueLevel());
+	        // Ensure metrics are reset/clean
+	        copy.setCompletionTime(0);
+	        copy.setTurnaroundTime(0);
+	        copy.setWaitingTime(0);
+	        copy.setResponseTime(0);
+	        tempProcesses.add(copy);
+	    }
 
-			//add all newly arrived processes to the queue
-			while (pIndex < processes.size() && processes.get(pIndex).getArrivalTime() <= currentTime){
-				readyQueue.add(processes.get(pIndex));
-				pIndex++;
-			}
+	    // sort by arrival time
+	    tempProcesses.sort(Comparator.comparingInt(ProcessControlBlock::getArrivalTime));
 
-			//if ready queue is empty jump to next arrival
+	    int currentTime = 0;
+	    int completed = 0;
+	    Queue<ProcessControlBlock> readyQueue = new LinkedList<>();
 
-			if (readyQueue.isEmpty())
-			{
-				if (pIndex < processes.size()){
-					currentTime = processes.get(pIndex).getArrivalTime();
-				}
-				continue;  //restart the loop to add the newly arrived processes
-			}
+	    int pIndex = 0; // next process to arrive
 
-			//runs the process
-			ProcessControlBlock current = readyQueue.poll();
+	    while (completed < tempProcesses.size()) {
 
-			if  (current.getStartTime() == -1)
-			{
-				current.setStartTime(currentTime);
-			}
+	        // add all newly arrived processes to the queue
+	        while (pIndex < tempProcesses.size() && tempProcesses.get(pIndex).getArrivalTime() <= currentTime) {
+	            readyQueue.add(tempProcesses.get(pIndex));
+	            pIndex++;
+	        }
 
+	        // if ready queue is empty, jump to next arrival (no change to existing objects)
+	        if (readyQueue.isEmpty()) {
+	            if (pIndex < tempProcesses.size()) {
+	                currentTime = tempProcesses.get(pIndex).getArrivalTime();
+	                // add that process now so we can run it immediately
+	                readyQueue.add(tempProcesses.get(pIndex));
+	                pIndex++;
+	            }
+	            continue;
+	        }
 
-			//run for quantum  or remaining time, whichever us smaller
+	        // run the process at the head of the ready queue
+	        ProcessControlBlock current = readyQueue.poll();
 
-			int timeToRun = Math.min(quantum, current.getRemainingTime());
-			current.setRemainingTime(current.getRemainingTime() - timeToRun);
-			currentTime += timeToRun;
+	        // set start time if this is the first time the process runs
+	        if (current.getStartTime() == -1) {
+	            current.setStartTime(currentTime);
+	        }
 
-			//check arrivals that happened while we were running
-			while (pIndex < processes.size() && processes.get(pIndex).getArrivalTime() <= currentTime){
-				readyQueue.add(processes.get(pIndex));
-				pIndex++;						
-			}
+	        // Determine how long to run: min(quantum, remaining)
+	        int timeToRun = Math.min(quantum, current.getRemainingTime());
+	        // advance time & decrease remaining
+	        current.setRemainingTime(current.getRemainingTime() - timeToRun);
+	        currentTime += timeToRun;
 
-			//requeue if not finished or mark completed
-			if (current.getRemainingTime() > 0)
-			{
-				readyQueue.add(current);
-			} else {
-				completed++;
-				current.setCompletionTime(currentTime);
-			}			
-		}
-		
-		//calculate metrics
-			
-		calculatePerformanceMetrics(processes);		
+	        // Add any processes that arrived while we were running
+	        while (pIndex < tempProcesses.size() && tempProcesses.get(pIndex).getArrivalTime() <= currentTime) {
+	            readyQueue.add(tempProcesses.get(pIndex));
+	            pIndex++;
+	        }
+
+	        // If not finished, requeue. If finished, set completionTime and count it.
+	        if (current.getRemainingTime() > 0) {
+	            readyQueue.add(current);
+	        } else {
+	            completed++;
+	            current.setCompletionTime(currentTime);
+	        }
+	    }
+
+	    // Calculate & print metrics using the temporary list (so original list remains unchanged)
+	    calculatePerformanceMetrics(tempProcesses);
 	}
 	
 	public static void priorityScheduling(List <ProcessControlBlock> processes)
@@ -494,14 +521,14 @@ public class ProcessControlBlock {
 	
 	
 	
-	public static void multiLevelQueue(List <ProcessControlBlock> processes){
+	public static void multiLevelQueue(List <ProcessControlBlock> processes, Scanner scanner){
 		int quantum= -1;
 		boolean validInput = false;
 		int currentTime= 0;
 		int completedNum= 0;
 		int nextProcess= 0; //used as the index of the next process
 		
-		try(Scanner scanner = new Scanner(System.in)){	
+		try{	
 			while(!validInput){
 				System.out.print("Enter the time quantum of the higher priority processes: ");
 				if(scanner.hasNextInt()){
@@ -696,14 +723,13 @@ public class ProcessControlBlock {
 			System.out.println("\n--- Running First Come First Serve (FCFS) ---\n");
 			firstComeFirstServe(processes);
 
-			System.out.println("\n--- Running Round Robin (RR) ---\n");
-			roundRobin(processes, 2);
+			roundRobin(processes, scanner);
 			
 		    System.out.println("\n--- Running Priority Scheduling (Non-Preemptive) ---");
 		    priorityScheduling(processes);
 			
 			System.out.println("\n--- Running Multi Level Queue (MLQ) ---\n");
-			multiLevelQueue(processes);
+			multiLevelQueue(processes, scanner);
 			
 		}catch(Exception e){
 			System.err.println(e.getMessage());
