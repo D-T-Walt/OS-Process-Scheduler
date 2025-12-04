@@ -24,22 +24,6 @@ public class ProcessControlBlock {
 	//tracking variables for simulatioon logic
 	private int remainingTime;
 	private int startTime;
-	
-
-	/*public ProcessControlBlock(int pid, int arrivalTime, int burstTime, int priority, int queueLevel, int completionTime, int waitingTime,
-			int turnaroundTime, int responseTime, int remainingTime, int startTime) {
-		this.arrivalTime = arrivalTime;
-		this.burstTime = burstTime;
-		this.priority = priority;
-		this.queueLevel = queueLevel;
-		this.completionTime = completionTime;
-		this.waitingTime = waitingTime;
-		this.turnaroundTime = turnaroundTime;
-		this.responseTime = responseTime;
-		this.remainingTime = remainingTime;
-		this.startTime = startTime;
-		
-	} */
 
 	 public ProcessControlBlock(int pid, int arrivalTime, int burstTime, int priority, int queueLevel) {
         this.pid = pid;
@@ -58,8 +42,6 @@ public class ProcessControlBlock {
         this.turnaroundTime = 0;
         this.responseTime = 0;
     }
-
-
 
 	public ProcessControlBlock() {
 		this.pid = -1;
@@ -188,45 +170,6 @@ public class ProcessControlBlock {
 				+ ", waitingTime=" + waitingTime + ", turnaroundTime=" + turnaroundTime + ", responseTime="
 				+ responseTime + ", remainingTime=" + remainingTime + ", startTime=" + startTime + "]";
 	}
-
-	/*public static void calculatePerformanceMetrics(List<ProcessControlBlock> processes){
-		double totalTAT = 0, totalWT = 0, totalRT = 0, totalBT = 0;
-		int maxCompletionTime = 0;
-		int minArrivalTime = Integer.MAX_VALUE;
-		
-		for(ProcessControlBlock pcb : processes){
-			totalTAT += pcb.getTurnaroundTime();
-			totalWT += pcb.getWaitingTime();
-			totalRT += pcb.getResponseTime();
-			
-			totalBT += pcb.getBurstTime();
-			if(pcb.getCompletionTime() > maxCompletionTime){
-				maxCompletionTime = pcb.getCompletionTime();
-			}
-			
-			if(pcb.getArrivalTime() < minArrivalTime){
-				minArrivalTime = pcb.getArrivalTime();
-			}
-		}
-		
-		double totalExecutionTime = (double) maxCompletionTime - minArrivalTime;
-		
-		double avgTAT = totalTAT/processes.size();
-		double avgWT = totalWT/processes.size();
-		double avgRT = totalRT/processes.size();
-		
-		double cpuUtil, throughput;
-		
-		if(totalExecutionTime > 0){
-			cpuUtil = (totalBT/totalExecutionTime)*100;
-			throughput = (double) processes.size()/totalExecutionTime;
-		}else{
-			cpuUtil = 0;
-			throughput = 0;
-		}
-			
-	} */
-
 
 	 public static void calculatePerformanceMetrics(List<ProcessControlBlock> processes) {
         double totalTAT = 0, totalWT = 0, totalRT = 0, totalBT = 0;
